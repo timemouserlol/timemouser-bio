@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- Название вкладки -->
     <title>Time Mouser</title>
     <!-- Иконка вкладки (Nerd Emoji) -->
@@ -33,6 +33,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             cursor: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -42,9 +43,41 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 40px 15px;
+            padding: 70px 15px 40px;
             position: relative;
             overflow-x: hidden;
+        }
+
+        /* --- Инфо о YT (Слева сверху) --- */
+        .yt-notice-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 20px;
+            color: #fca5a5;
+            font-size: 0.78rem;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            pointer-events: none;
+            max-width: calc(100% - 85px);
+        }
+
+        .yt-notice-badge i {
+            font-size: 0.9rem;
+            color: var(--neon-red);
+            flex-shrink: 0;
+        }
+
+        .yt-notice-badge span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* --- Курсор --- */
@@ -125,6 +158,7 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
         .qr-modal-content {
@@ -136,12 +170,14 @@
             box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
             position: relative;
             max-width: 320px;
+            width: 100%;
         }
 
         .qr-modal-content img {
             width: 180px; height: 180px;
             border-radius: 12px;
             margin: 15px 0;
+            max-width: 100%;
         }
 
         .close-qr {
@@ -380,9 +416,90 @@
             opacity: 0.4;
             letter-spacing: 1px;
         }
+
+        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ И ТАЧСКРИНОВ --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 65px;
+                padding-bottom: 30px;
+            }
+
+            .yt-notice-badge {
+                top: 12px;
+                left: 12px;
+                padding: 6px 10px;
+                font-size: 0.7rem;
+                border-radius: 14px;
+            }
+
+            .qr-trigger-btn {
+                top: 12px;
+                right: 12px;
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+
+            .avatar-box {
+                width: 110px;
+                height: 110px;
+            }
+
+            .avatar-ring {
+                width: 122px;
+                height: 122px;
+                top: -6px;
+                left: -6px;
+            }
+
+            .profile h1 {
+                font-size: 1.8rem;
+            }
+
+            .profile p {
+                font-size: 0.88rem;
+            }
+
+            .link-card {
+                padding: 14px 16px;
+                border-radius: 18px;
+            }
+
+            .icon-box {
+                width: 42px;
+                height: 42px;
+                font-size: 1.25rem;
+                margin-right: 14px;
+                border-radius: 12px;
+            }
+
+            .link-title {
+                font-size: 1rem;
+            }
+
+            .link-sub {
+                font-size: 0.78rem;
+            }
+        }
+
+        /* Отключение кастомного курсора на сенсорных устройствах */
+        @media (pointer: coarse), (hover: none) {
+            * {
+                cursor: auto !important;
+            }
+            #cursor-dot, #cursor-trail-canvas {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Уведомление слева сверху -->
+    <div class="yt-notice-badge">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>YouTube оффлайн (API недоступно)</span>
+    </div>
 
     <!-- Курсор -->
     <div id="cursor-dot"></div>
@@ -495,7 +612,10 @@
     </div>
 
     <script>
-        // --- 0. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (DEBOUNCE/THROTTLE) ---
+        // Проверка сенсорного экрана
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // --- 0. DEBOUNCE ---
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -508,66 +628,67 @@
             };
         }
 
-        // --- 1. ШЛЕЙФ КУРСОР (С ОПТИМИЗАЦИЕЙ ПРОИЗВОДИТЕЛЬНОСТИ) ---
-        const dot = document.getElementById('cursor-dot');
-        const trailCanvas = document.getElementById('cursor-trail-canvas');
-        const tCtx = trailCanvas.getContext('2d');
+        // --- 1. ШЛЕЙФ КУРСОР (только для ПК) ---
+        if (!isTouchDevice) {
+            const dot = document.getElementById('cursor-dot');
+            const trailCanvas = document.getElementById('cursor-trail-canvas');
+            const tCtx = trailCanvas.getContext('2d');
 
-        function resizeTrailCanvas() {
-            trailCanvas.width = window.innerWidth;
-            trailCanvas.height = window.innerHeight;
-        }
-        resizeTrailCanvas();
-        window.addEventListener('resize', debounce(resizeTrailCanvas, 150));
-
-        let mouse = { x: -100, y: -100 };
-        let particles = [];
-        let lastParticleTime = 0;
-
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-            dot.style.left = `${mouse.x}px`;
-            dot.style.top = `${mouse.y}px`;
-
-            // Throttle создания спам-частиц курсора для защиты CPU
-            const now = performance.now();
-            if (now - lastParticleTime > 25) { 
-                lastParticleTime = now;
-                if (particles.length < 50) { // Ограничение максимального кол-ва элементов
-                    particles.push({
-                        x: mouse.x,
-                        y: mouse.y,
-                        size: Math.random() * 3 + 1,
-                        alpha: 1,
-                        vx: (Math.random() - 0.5) * 1.5,
-                        vy: (Math.random() - 0.5) * 1.5
-                    });
-                }
+            function resizeTrailCanvas() {
+                trailCanvas.width = window.innerWidth;
+                trailCanvas.height = window.innerHeight;
             }
-        });
+            resizeTrailCanvas();
+            window.addEventListener('resize', debounce(resizeTrailCanvas, 150));
 
-        function animateTrail() {
-            tCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-            for (let i = 0; i < particles.length; i++) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.alpha -= 0.025;
+            let mouse = { x: -100, y: -100 };
+            let particles = [];
+            let lastParticleTime = 0;
 
-                tCtx.beginPath();
-                tCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                tCtx.fillStyle = `rgba(251, 191, 36, ${Math.max(p.alpha, 0)})`;
-                tCtx.fill();
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                dot.style.left = `${mouse.x}px`;
+                dot.style.top = `${mouse.y}px`;
 
-                if (p.alpha <= 0) {
-                    particles.splice(i, 1);
-                    i--;
+                const now = performance.now();
+                if (now - lastParticleTime > 25) { 
+                    lastParticleTime = now;
+                    if (particles.length < 50) {
+                        particles.push({
+                            x: mouse.x,
+                            y: mouse.y,
+                            size: Math.random() * 3 + 1,
+                            alpha: 1,
+                            vx: (Math.random() - 0.5) * 1.5,
+                            vy: (Math.random() - 0.5) * 1.5
+                        });
+                    }
                 }
+            });
+
+            function animateTrail() {
+                tCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.alpha -= 0.025;
+
+                    tCtx.beginPath();
+                    tCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    tCtx.fillStyle = `rgba(251, 191, 36, ${Math.max(p.alpha, 0)})`;
+                    tCtx.fill();
+
+                    if (p.alpha <= 0) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+                requestAnimationFrame(animateTrail);
             }
-            requestAnimationFrame(animateTrail);
+            animateTrail();
         }
-        animateTrail();
 
         // --- 2. ПОДСВЕТКА ФОНА ---
         const glowBg = document.getElementById('dynamic-glow');
@@ -584,7 +705,7 @@
             });
         });
 
-        // --- 3. КОПИРОВАНИЕ DISCORD (ЗАЩИТА ОТ СПАМ-КЛИКОВ) ---
+        // --- 3. КОПИРОВАНИЕ DISCORD ---
         const copyBtn = document.getElementById('copy-discord-btn');
         const copyToast = document.getElementById('copy-toast');
         const DISCORD_LINK = 'https://discord.gg/2yjjVhjQ';
@@ -622,16 +743,14 @@
             if (e.target === qrModal) qrModal.style.display = 'none';
         });
 
-        // --- 5. ДВОЙНОЙ ТРЕКИНГ СТРИМОВ (TWITCH И YOUTUBE НАДЕЖНАЯ ПРОВЕРКА) ---
+        // --- 5. ТРЕКИНГ ТОЛЬКО TWITCH ---
         const TWITCH_CHANNEL = 'timemouser';
-        const YOUTUBE_USER = 'timemouser';
 
         async function checkLiveStatus() {
             const badge = document.getElementById('live-status-badge');
             const statusText = document.getElementById('live-status-text');
 
             try {
-                // 1. Проверяем Twitch
                 const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
                 if (twResponse.ok) {
                     const twData = await twResponse.text();
@@ -642,21 +761,6 @@
                     }
                 }
 
-                // 2. Стабильная проверка YouTube через NoEmbed
-                const ytLiveUrl = `https://www.youtube.com/@${YOUTUBE_USER}/live`;
-                const ytResponse = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(ytLiveUrl)}`);
-                
-                if (ytResponse.ok) {
-                    const ytData = await ytResponse.json();
-                    // Если стрим идёт, noembed отдает валидное название ролика и авторство
-                    if (ytData && ytData.title && !ytData.error) {
-                        badge.classList.add('is-live');
-                        statusText.textContent = `YOUTUBE LIVE`;
-                        return;
-                    }
-                }
-
-                // Если везде офлайн
                 badge.classList.remove('is-live');
                 statusText.textContent = 'OFFLINE';
 
@@ -667,8 +771,7 @@
         }
 
         checkLiveStatus();
-        // Запрос раз в 90 секунд для предотвращения лимита запросов
-        setInterval(checkLiveStatus, 90000);
+        setInterval(checkLiveStatus, 60000);
 
         // --- 6. ВОЛНЫ НА ФОНЕ ---
         const canvas = document.getElementById('bg-canvas');
@@ -703,26 +806,28 @@
         }
         renderWaves();
 
-        // --- 7. МАГНИТНЫЙ ЭФФЕКТ КАРТОЧЕК (С ОПТИМИЗАЦИЕЙ RAF) ---
-        document.querySelectorAll('.link-card').forEach(card => {
-            let rafId = null;
+        // --- 7. МАГНИТНЫЙ ЭФФЕКТ КАРТОЧЕК (Только для ПК) ---
+        if (!isTouchDevice) {
+            document.querySelectorAll('.link-card').forEach(card => {
+                let rafId = null;
 
-            card.addEventListener('mousemove', (e) => {
-                if (rafId) cancelAnimationFrame(rafId);
-                
-                rafId = requestAnimationFrame(() => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left - rect.width / 2;
-                    const y = e.clientY - rect.top - rect.height / 2;
-                    card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
+                card.addEventListener('mousemove', (e) => {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    
+                    rafId = requestAnimationFrame(() => {
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left - rect.width / 2;
+                        const y = e.clientY - rect.top - rect.height / 2;
+                        card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
+                    });
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    card.style.transform = 'translate(0px, 0px) scale(1)';
                 });
             });
-
-            card.addEventListener('mouseleave', () => {
-                if (rafId) cancelAnimationFrame(rafId);
-                card.style.transform = 'translate(0px, 0px) scale(1)';
-            });
-        });
+        }
     </script>
 </body>
 </html>
