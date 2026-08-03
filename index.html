@@ -17,6 +17,7 @@
             --neon-purple: #a855f7;
             --neon-blue: #5865F2;
             --neon-orange: #FF5500;
+            --neon-red: #FF0000;
             --active-glow: transparent;
         }
 
@@ -357,6 +358,7 @@
             transform: translateY(0);
         }
 
+        .youtube { background: linear-gradient(135deg, #FF0000, #cc0000); }
         .twitch { background: linear-gradient(135deg, #a970ff, #772ce8); }
         .discord { background: linear-gradient(135deg, #5865F2, #3b428a); }
         .da { background: linear-gradient(135deg, #FF9E1B, #FF5500); }
@@ -415,6 +417,18 @@
 
         <!-- Кнопки -->
         <div class="links-list">
+
+            <!-- YouTube -->
+            <a href="https://www.youtube.com/@timemouser" target="_blank" class="link-card protected-link" data-glow="var(--neon-red)">
+                <div class="icon-box youtube">
+                    <i class="fa-brands fa-youtube"></i>
+                </div>
+                <div class="link-text">
+                    <span class="link-title">YouTube</span>
+                    <span class="link-sub">Видео и ролики</span>
+                </div>
+                <i class="fa-solid fa-chevron-right action-icon"></i>
+            </a>
 
             <!-- Twitch -->
             <a href="https://twitch.tv/timemouser" target="_blank" class="link-card protected-link" data-glow="var(--neon-purple)">
