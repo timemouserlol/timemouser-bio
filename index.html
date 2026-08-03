@@ -58,6 +58,7 @@
             z-index: 10000;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 10px var(--neon-gold);
+            will-change: transform, left, top;
         }
 
         #cursor-trail-canvas {
@@ -148,6 +149,7 @@
             top: 10px; right: 15px;
             font-size: 1.4rem;
             color: var(--text-sub);
+            cursor: pointer;
         }
 
         /* --- Контейнер --- */
@@ -287,6 +289,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
         }
 
         .link-card::after {
@@ -492,7 +495,20 @@
     </div>
 
     <script>
-        // --- 1. ШЛЕЙФ КУРСОР ---
+        // --- 0. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (DEBOUNCE/THROTTLE) ---
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // --- 1. ШЛЕЙФ КУРСОР (С ОПТИМИЗАЦИЕЙ ПРОИЗВОДИТЕЛЬНОСТИ) ---
         const dot = document.getElementById('cursor-dot');
         const trailCanvas = document.getElementById('cursor-trail-canvas');
         const tCtx = trailCanvas.getContext('2d');
@@ -502,10 +518,11 @@
             trailCanvas.height = window.innerHeight;
         }
         resizeTrailCanvas();
-        window.addEventListener('resize', resizeTrailCanvas);
+        window.addEventListener('resize', debounce(resizeTrailCanvas, 150));
 
         let mouse = { x: -100, y: -100 };
         let particles = [];
+        let lastParticleTime = 0;
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
@@ -513,15 +530,20 @@
             dot.style.left = `${mouse.x}px`;
             dot.style.top = `${mouse.y}px`;
 
-            for(let i = 0; i < 2; i++) {
-                particles.push({
-                    x: mouse.x,
-                    y: mouse.y,
-                    size: Math.random() * 3 + 1,
-                    alpha: 1,
-                    vx: (Math.random() - 0.5) * 1.5,
-                    vy: (Math.random() - 0.5) * 1.5
-                });
+            // Throttle создания спам-частиц курсора для защиты CPU
+            const now = performance.now();
+            if (now - lastParticleTime > 25) { 
+                lastParticleTime = now;
+                if (particles.length < 50) { // Ограничение максимального кол-ва элементов
+                    particles.push({
+                        x: mouse.x,
+                        y: mouse.y,
+                        size: Math.random() * 3 + 1,
+                        alpha: 1,
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: (Math.random() - 0.5) * 1.5
+                    });
+                }
             }
         });
 
@@ -535,7 +557,7 @@
 
                 tCtx.beginPath();
                 tCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                tCtx.fillStyle = `rgba(251, 191, 36, ${p.alpha})`;
+                tCtx.fillStyle = `rgba(251, 191, 36, ${Math.max(p.alpha, 0)})`;
                 tCtx.fill();
 
                 if (p.alpha <= 0) {
@@ -562,15 +584,24 @@
             });
         });
 
-        // --- 3. КОПИРОВАНИЕ DISCORD ---
+        // --- 3. КОПИРОВАНИЕ DISCORD (ЗАЩИТА ОТ СПАМ-КЛИКОВ) ---
         const copyBtn = document.getElementById('copy-discord-btn');
         const copyToast = document.getElementById('copy-toast');
         const DISCORD_LINK = 'https://discord.gg/2yjjVhjQ';
+        let isCopying = false;
 
         copyBtn.addEventListener('click', () => {
+            if (isCopying) return;
+            isCopying = true;
+
             navigator.clipboard.writeText(DISCORD_LINK).then(() => {
                 copyToast.classList.add('show');
-                setTimeout(() => copyToast.classList.remove('show'), 2000);
+                setTimeout(() => {
+                    copyToast.classList.remove('show');
+                    isCopying = false;
+                }, 1800);
+            }).catch(() => {
+                isCopying = false;
             });
         });
 
@@ -591,7 +622,7 @@
             if (e.target === qrModal) qrModal.style.display = 'none';
         });
 
-        // --- 5. ДВОЙНОЙ ТРЕКИНГ (TWITCH И YOUTUBE) ---
+        // --- 5. ДВОЙНОЙ ТРЕКИНГ СТРИМОВ (TWITCH И YOUTUBE НАДЕЖНАЯ ПРОВЕРКА) ---
         const TWITCH_CHANNEL = 'timemouser';
         const YOUTUBE_USER = 'timemouser';
 
@@ -602,45 +633,53 @@
             try {
                 // 1. Проверяем Twitch
                 const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
-                const twData = await twResponse.text();
-
-                if (!twData.includes('offline') && !twData.includes('user not found')) {
-                    badge.classList.add('is-live');
-                    statusText.textContent = `TWITCH LIVE`;
-                    return;
+                if (twResponse.ok) {
+                    const twData = await twResponse.text();
+                    if (!twData.includes('offline') && !twData.includes('user not found')) {
+                        badge.classList.add('is-live');
+                        statusText.textContent = `TWITCH LIVE`;
+                        return;
+                    }
                 }
 
-                // 2. Проверяем YouTube
-                const ytResponse = await fetch(`https://decapi.me/youtube/live_title/${YOUTUBE_USER}`);
-                const ytData = await ytResponse.text();
-
-                if (!ytData.includes('User is not live') && !ytData.includes('Error') && ytData.trim().length > 0) {
-                    badge.classList.add('is-live');
-                    statusText.textContent = `YOUTUBE LIVE`;
-                    return;
+                // 2. Стабильная проверка YouTube через NoEmbed
+                const ytLiveUrl = `https://www.youtube.com/@${YOUTUBE_USER}/live`;
+                const ytResponse = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(ytLiveUrl)}`);
+                
+                if (ytResponse.ok) {
+                    const ytData = await ytResponse.json();
+                    // Если стрим идёт, noembed отдает валидное название ролика и авторство
+                    if (ytData && ytData.title && !ytData.error) {
+                        badge.classList.add('is-live');
+                        statusText.textContent = `YOUTUBE LIVE`;
+                        return;
+                    }
                 }
 
-                // Если офлайн везде
+                // Если везде офлайн
                 badge.classList.remove('is-live');
                 statusText.textContent = 'OFFLINE';
 
             } catch (error) {
+                badge.classList.remove('is-live');
                 statusText.textContent = 'TIME MOUSER';
             }
         }
 
         checkLiveStatus();
-        setInterval(checkLiveStatus, 60000);
+        // Запрос раз в 90 секунд для предотвращения лимита запросов
+        setInterval(checkLiveStatus, 90000);
 
         // --- 6. ВОЛНЫ НА ФОНЕ ---
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
+        
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         }
-        window.addEventListener('resize', resize);
+        window.addEventListener('resize', debounce(resize, 150));
         resize();
 
         let step = 0;
@@ -664,15 +703,23 @@
         }
         renderWaves();
 
-        // --- 7. МАГНИТНЫЙ ЭФФЕКТ КАРТОЧЕК ---
+        // --- 7. МАГНИТНЫЙ ЭФФЕКТ КАРТОЧЕК (С ОПТИМИЗАЦИЕЙ RAF) ---
         document.querySelectorAll('.link-card').forEach(card => {
+            let rafId = null;
+
             card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
+                if (rafId) cancelAnimationFrame(rafId);
+                
+                rafId = requestAnimationFrame(() => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
+                });
             });
+
             card.addEventListener('mouseleave', () => {
+                if (rafId) cancelAnimationFrame(rafId);
                 card.style.transform = 'translate(0px, 0px) scale(1)';
             });
         });
