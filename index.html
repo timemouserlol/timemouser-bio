@@ -409,10 +409,10 @@
                 <img src="https://i.pinimg.com/736x/09/2d/18/092d18476bf383a5ad77926e83ef59d2.jpg" alt="Time Mouser Avatar" class="avatar" onerror="this.src='https://i.pinimg.com/474x/b6/e4/fb/b6e4fbd6be94845c6666e8729d126d2c.jpg?nii=t'">
             </div>
 
-            <!-- Статус Twitch -->
-            <div class="status-badge" id="twitch-status-badge">
+            <!-- Статус Стримов -->
+            <div class="status-badge" id="live-status-badge">
                 <span class="status-dot"></span>
-                <span id="twitch-status-text">ПОДКЛЮЧЕНИЕ...</span>
+                <span id="live-status-text">ПОДКЛЮЧЕНИЕ...</span>
             </div>
 
             <h1>Time Mouser</h1>
@@ -576,27 +576,46 @@
             if (e.target === qrModal) qrModal.style.display = 'none';
         });
 
-        // --- 5. ТРЕКИНГ TWITCH ---
+        // --- 5. ДВОЙНОЙ ТРЕКИНГ (TWITCH И YOUTUBE) ---
         const TWITCH_CHANNEL = 'timemouser';
-        async function checkTwitchLiveStatus() {
-            const badge = document.getElementById('twitch-status-badge');
-            const statusText = document.getElementById('twitch-status-text');
+        const YOUTUBE_USER = 'timemouser';
+
+        async function checkLiveStatus() {
+            const badge = document.getElementById('live-status-badge');
+            const statusText = document.getElementById('live-status-text');
+
             try {
-                const response = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
-                const data = await response.text();
-                if (data.includes('offline') || data.includes('user not found')) {
-                    badge.classList.remove('is-live');
-                    statusText.textContent = 'OFFLINE';
-                } else {
+                // 1. Проверяем Twitch
+                const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
+                const twData = await twResponse.text();
+
+                if (!twData.includes('offline') && !twData.includes('user not found')) {
                     badge.classList.add('is-live');
-                    statusText.textContent = `LIVE (${data})`;
+                    statusText.textContent = `TWITCH LIVE`;
+                    return;
                 }
+
+                // 2. Проверяем YouTube
+                const ytResponse = await fetch(`https://decapi.me/youtube/live_title/${YOUTUBE_USER}`);
+                const ytData = await ytResponse.text();
+
+                if (!ytData.includes('User is not live') && !ytData.includes('Error') && ytData.trim().length > 0) {
+                    badge.classList.add('is-live');
+                    statusText.textContent = `YOUTUBE LIVE`;
+                    return;
+                }
+
+                // Если офлайн везде
+                badge.classList.remove('is-live');
+                statusText.textContent = 'OFFLINE';
+
             } catch (error) {
-                statusText.textContent = 'TWITCH CHANNEL';
+                statusText.textContent = 'TIME MOUSER';
             }
         }
-        checkTwitchLiveStatus();
-        setInterval(checkTwitchLiveStatus, 60000);
+
+        checkLiveStatus();
+        setInterval(checkLiveStatus, 60000);
 
         // --- 6. ВОЛНЫ НА ФОНЕ ---
         const canvas = document.getElementById('bg-canvas');
