@@ -142,7 +142,7 @@
             box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
         }
 
-        .qr-modal, .admin-modal {
+        .qr-modal {
             display: none;
             position: fixed;
             inset: 0;
@@ -154,7 +154,7 @@
             padding: 20px;
         }
 
-        .qr-modal-content, .admin-modal-content {
+        .qr-modal-content {
             background: #0d1224;
             border: 1px solid var(--neon-gold);
             padding: 30px;
@@ -166,7 +166,7 @@
             width: 100%;
         }
 
-        .close-modal {
+        .close-qr {
             position: absolute;
             top: 10px; right: 15px;
             font-size: 1.4rem;
@@ -364,30 +364,6 @@
             color: var(--text-sub);
             opacity: 0.4;
         }
-
-        /* Таблица Админ-Панели */
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 15px 0;
-            text-align: left;
-        }
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .stat-card span {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--text-sub);
-        }
-        .stat-card strong {
-            font-size: 1.2rem;
-            color: var(--neon-gold);
-        }
     </style>
 </head>
 <body>
@@ -406,35 +382,10 @@
 
     <div class="qr-modal" id="qr-modal">
         <div class="qr-modal-content">
-            <span class="close-modal" id="close-qr-btn">&times;</span>
+            <span class="close-qr" id="close-qr-btn">&times;</span>
             <h3 style="color: #fff; font-size: 1.1rem;">QR-код страницы</h3>
-            <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px;">Отсканируй с телефона</p>
-            <img id="qr-image" src="" alt="QR Code">
-        </div>
-    </div>
-
-    <!-- Модальное окно Админ Панели -->
-    <div class="admin-modal" id="admin-modal">
-        <div class="admin-modal-content">
-            <span class="close-modal" id="close-admin-btn">&times;</span>
-            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 5px;">📊 Аналитика сайта</h3>
-            <p style="color: var(--text-sub); font-size: 0.8rem;">Статистика вашей страницы</p>
-            
-            <div class="analytics-grid">
-                <div class="stat-card">
-                    <span>Всего просмотров</span>
-                    <strong id="stat-views">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Всего кликов</span>
-                    <strong id="stat-clicks">0</strong>
-                </div>
-            </div>
-
-            <div style="text-align: left; margin-top: 10px;">
-                <span style="font-size: 0.8rem; color: var(--text-sub);">Клики по кнопкам:</span>
-                <ul id="clicks-breakdown" style="list-style: none; font-size: 0.85rem; margin-top: 6px;"></ul>
-            </div>
+            <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px; margin-bottom: 12px;">Отсканируй с телефона</p>
+            <img id="qr-image" src="" alt="QR Code" style="border-radius: 12px;">
         </div>
     </div>
 
@@ -511,7 +462,7 @@
     </div>
 
     <script>
-        // --- 0. АНАЛИТИКА И АДМИН ПАНЕЛЬ ---
+        // --- 0. НАСТРОЙКА СЕКРЕТА И АНАЛИТИКИ ---
         const SECRET_HASH = "beebfd19810f34eb89e47fe23f9905fa8a3fa387ea1c2c366ffef092e0227bb3"; 
 
         async function hashString(str) {
@@ -522,11 +473,8 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        function initAnalytics() {
-            let views = parseInt(localStorage.getItem('page_views') || '0');
-            localStorage.setItem('page_views', views + 1);
-        }
-        initAnalytics();
+        let views = parseInt(localStorage.getItem('page_views') || '0');
+        localStorage.setItem('page_views', views + 1);
 
         function trackClick(name) {
             let clicks = JSON.parse(localStorage.getItem('click_stats') || '{}');
@@ -536,59 +484,110 @@
 
         document.querySelectorAll('.link-card').forEach(card => {
             card.addEventListener('click', () => {
-                const name = card.getAttribute('data-name');
-                if (name) trackClick(name);
+                const title = card.querySelector('.link-title');
+                if (title) trackClick(title.textContent.trim());
             });
         });
 
         async function checkPasswordAndOpen(inputPass) {
-            const hashedInput = await hashString(inputPass);
+            const hashedInput = await hashString(inputPass.trim());
             if (hashedInput === SECRET_HASH) {
                 openAdminPanel();
             }
         }
 
-        // Ввод секретной фразы на клавиатуре
         let keyBuffer = '';
         window.addEventListener('keydown', (e) => {
-            keyBuffer += e.key;
-            if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
-            checkPasswordAndOpen(keyBuffer);
+            if (e.key.length === 1) {
+                keyBuffer += e.key;
+                if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
+                checkPasswordAndOpen(keyBuffer);
+            }
         });
 
-        // Открытие по клику на аватар (с вводом пароля)
-        document.getElementById('admin-trigger').addEventListener('click', async () => {
-            const pwd = prompt('Введите секретный ключ:');
-            if (pwd) checkPasswordAndOpen(pwd);
-        });
+        const avatarBox = document.getElementById('admin-trigger');
+        if (avatarBox) {
+            avatarBox.style.cursor = 'pointer';
+            avatarBox.addEventListener('click', async () => {
+                const pwd = prompt('Введите секретный код для админ-панели:');
+                if (pwd) {
+                    const hashedInput = await hashString(pwd.trim());
+                    if (hashedInput === SECRET_HASH) {
+                        openAdminPanel();
+                    } else {
+                        alert('Неверный пароль!');
+                    }
+                }
+            });
+        }
 
         function openAdminPanel() {
-            const views = localStorage.getItem('page_views') || '0';
+            let modal = document.getElementById('admin-modal');
+            
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'admin-modal';
+                modal.className = 'qr-modal';
+                modal.innerHTML = `
+                    <div class="qr-modal-content" style="max-width: 360px;">
+                        <span class="close-qr" id="close-admin-btn">&times;</span>
+                        <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">📊 Аналитика сайта</h3>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: left;">
+                            <div style="color: var(--text-sub); font-size: 0.85rem;">Всего просмотров: <strong id="adm-views" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
+                            <div style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">Всего кликов по кнопкам: <strong id="adm-clicks" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="color: #fff; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Клики по ссылкам:</div>
+                            <ul id="adm-list" style="list-style: none; color: var(--text-sub); font-size: 0.85rem; padding: 0;"></ul>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                document.getElementById('close-admin-btn').onclick = () => {
+                    modal.style.display = 'none';
+                };
+            }
+
+            const currentViews = localStorage.getItem('page_views') || '0';
             const clicks = JSON.parse(localStorage.getItem('click_stats') || '{}');
 
-            document.getElementById('stat-views').textContent = views;
+            document.getElementById('adm-views').textContent = currentViews;
 
             let totalClicks = 0;
-            const breakdown = document.getElementById('clicks-breakdown');
-            breakdown.innerHTML = '';
+            const listEl = document.getElementById('adm-list');
+            listEl.innerHTML = '';
 
             for (const [key, val] of Object.entries(clicks)) {
                 totalClicks += val;
                 const li = document.createElement('li');
-                li.innerHTML = `${key}: <strong style="color:var(--neon-gold)">${val}</strong>`;
-                breakdown.appendChild(li);
+                li.style.marginBottom = '4px';
+                li.innerHTML = `• ${key}: <strong style="color:#fff">${val}</strong>`;
+                listEl.appendChild(li);
             }
 
-            document.getElementById('stat-clicks').textContent = totalClicks;
-            document.getElementById('admin-modal').style.display = 'flex';
+            if (Object.keys(clicks).length === 0) {
+                listEl.innerHTML = '<li>Кликов пока не было</li>';
+            }
+
+            document.getElementById('adm-clicks').textContent = totalClicks;
+            modal.style.display = 'flex';
         }
 
-        document.getElementById('close-admin-btn').addEventListener('click', () => {
-            document.getElementById('admin-modal').style.display = 'none';
-        });
-
-        // --- ДРУГИЕ ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ ---
+        // --- 1. АНИМАЦИИ И ИНТЕРАКТИВ ---
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         if (!isTouchDevice) {
             const dot = document.getElementById('cursor-dot');
@@ -600,10 +599,11 @@
                 trailCanvas.height = window.innerHeight;
             }
             resizeTrailCanvas();
-            window.addEventListener('resize', resizeTrailCanvas);
+            window.addEventListener('resize', debounce(resizeTrailCanvas, 150));
 
             let mouse = { x: -100, y: -100 };
             let particles = [];
+            let lastParticleTime = 0;
 
             window.addEventListener('mousemove', (e) => {
                 mouse.x = e.clientX;
@@ -611,14 +611,18 @@
                 dot.style.left = `${mouse.x}px`;
                 dot.style.top = `${mouse.y}px`;
 
-                if (particles.length < 40) {
-                    particles.push({
-                        x: mouse.x, y: mouse.y,
-                        size: Math.random() * 3 + 1,
-                        alpha: 1,
-                        vx: (Math.random() - 0.5) * 1.5,
-                        vy: (Math.random() - 0.5) * 1.5
-                    });
+                const now = performance.now();
+                if (now - lastParticleTime > 25) { 
+                    lastParticleTime = now;
+                    if (particles.length < 50) {
+                        particles.push({
+                            x: mouse.x, y: mouse.y,
+                            size: Math.random() * 3 + 1,
+                            alpha: 1,
+                            vx: (Math.random() - 0.5) * 1.5,
+                            vy: (Math.random() - 0.5) * 1.5
+                        });
+                    }
                 }
             });
 
@@ -628,11 +632,16 @@
                     let p = particles[i];
                     p.x += p.vx; p.y += p.vy;
                     p.alpha -= 0.025;
+
                     tCtx.beginPath();
                     tCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                     tCtx.fillStyle = `rgba(251, 191, 36, ${Math.max(p.alpha, 0)})`;
                     tCtx.fill();
-                    if (p.alpha <= 0) { particles.splice(i, 1); i--; }
+
+                    if (p.alpha <= 0) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
                 }
                 requestAnimationFrame(animateTrail);
             }
@@ -648,31 +657,52 @@
                     glowBg.style.opacity = '0.25';
                 }
             });
-            card.addEventListener('mouseleave', () => glowBg.style.opacity = '0');
+            card.addEventListener('mouseleave', () => {
+                glowBg.style.opacity = '0';
+            });
         });
 
         const copyBtn = document.getElementById('copy-discord-btn');
         const copyToast = document.getElementById('copy-toast');
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText('https://discord.gg/2yjjVhjQ').then(() => {
-                copyToast.classList.add('show');
-                setTimeout(() => copyToast.classList.remove('show'), 1800);
+        const DISCORD_LINK = 'https://discord.gg/2yjjVhjQ';
+        let isCopying = false;
+
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                if (isCopying) return;
+                isCopying = true;
+                navigator.clipboard.writeText(DISCORD_LINK).then(() => {
+                    copyToast.classList.add('show');
+                    setTimeout(() => {
+                        copyToast.classList.remove('show');
+                        isCopying = false;
+                    }, 1800);
+                }).catch(() => { isCopying = false; });
             });
-        });
+        }
 
         const qrModal = document.getElementById('qr-modal');
-        document.getElementById('open-qr-btn').addEventListener('click', () => {
-            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(window.location.href)}&color=fbbf24&bgcolor=0d1224`;
-            qrModal.style.display = 'flex';
-        });
-        document.getElementById('close-qr-btn').addEventListener('click', () => qrModal.style.display = 'none');
+        const openQrBtn = document.getElementById('open-qr-btn');
+        const closeQrBtn = document.getElementById('close-qr-btn');
+        const qrImg = document.getElementById('qr-image');
 
-        // Twitch проверка
+        if (openQrBtn) {
+            openQrBtn.addEventListener('click', () => {
+                const currentUrl = encodeURIComponent(window.location.href);
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${currentUrl}&color=fbbf24&bgcolor=0d1224`;
+                qrModal.style.display = 'flex';
+            });
+        }
+        if (closeQrBtn) closeQrBtn.addEventListener('click', () => qrModal.style.display = 'none');
+
+        const TWITCH_CHANNEL = 'timemouser';
         async function checkLiveStatus() {
             const badge = document.getElementById('live-status-badge');
             const statusText = document.getElementById('live-status-text');
+            if (!badge || !statusText) return;
+
             try {
-                const twResponse = await fetch(`https://decapi.me/twitch/uptime/timemouser`);
+                const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
                 if (twResponse.ok) {
                     const twData = await twResponse.text();
                     if (!twData.includes('offline') && !twData.includes('user not found')) {
@@ -689,6 +719,58 @@
             }
         }
         checkLiveStatus();
+        setInterval(checkLiveStatus, 60000);
+
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', debounce(resize, 150));
+        resize();
+
+        let step = 0;
+        function renderWaves() {
+            ctx.clearRect(0, 0, width, height);
+            step += 0.015;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = i === 0 ? 'rgba(251, 191, 36, 0.08)' : (i === 1 ? 'rgba(168, 85, 247, 0.08)' : 'rgba(88, 101, 242, 0.08)');
+                for (let x = 0; x <= width; x += 20) {
+                    const y = Math.sin(x * 0.003 + step + i) * 35 +
+                              Math.cos(x * 0.001 + step) * 15 +
+                              height / 2 + (i * 60 - 60);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            requestAnimationFrame(renderWaves);
+        }
+        renderWaves();
+
+        if (!isTouchDevice) {
+            document.querySelectorAll('.link-card').forEach(card => {
+                let rafId = null;
+                card.addEventListener('mousemove', (e) => {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    rafId = requestAnimationFrame(() => {
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left - rect.width / 2;
+                        const y = e.clientY - rect.top - rect.height / 2;
+                        card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
+                    });
+                });
+                card.addEventListener('mouseleave', () => {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    card.style.transform = 'translate(0px, 0px) scale(1)';
+                });
+            });
+        }
     </script>
 </body>
 </html>
