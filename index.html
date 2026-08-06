@@ -6,6 +6,7 @@
     <title>Time Mouser</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤓</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --bg-color: #05070f;
@@ -42,37 +43,6 @@
             padding: 70px 15px 40px;
             position: relative;
             overflow-x: hidden;
-        }
-
-        .yt-notice-badge {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            background: rgba(239, 68, 68, 0.12);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 20px;
-            color: #fca5a5;
-            font-size: 0.78rem;
-            backdrop-filter: blur(10px);
-            z-index: 100;
-            pointer-events: none;
-            max-width: calc(100% - 85px);
-        }
-
-        .yt-notice-badge i {
-            font-size: 0.9rem;
-            color: var(--neon-red);
-            flex-shrink: 0;
-        }
-
-        .yt-notice-badge span {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         #cursor-dot {
@@ -195,6 +165,7 @@
             position: relative;
             width: 130px; height: 130px;
             margin-bottom: 20px;
+            cursor: pointer;
         }
 
         .avatar {
@@ -225,45 +196,6 @@
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            background: rgba(148, 163, 184, 0.1);
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            border-radius: 30px;
-            font-size: 0.75rem;
-            color: var(--text-sub);
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-            backdrop-filter: blur(10px);
-        }
-
-        .status-dot {
-            width: 8px; height: 8px;
-            background-color: #64748b;
-            border-radius: 50%;
-        }
-
-        .status-badge.is-live {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: rgba(34, 197, 94, 0.5);
-            color: #4ade80;
-        }
-
-        .status-badge.is-live .status-dot {
-            background-color: #22c55e;
-            box-shadow: 0 0 10px #22c55e;
-            animation: pulseDot 1.5s infinite;
-        }
-
-        @keyframes pulseDot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.4; }
         }
 
         .profile h1 {
@@ -368,11 +300,6 @@
 </head>
 <body>
 
-    <div class="yt-notice-badge">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>YouTube оффлайн (API недоступно)</span>
-    </div>
-
     <div id="cursor-dot"></div>
     <canvas id="cursor-trail-canvas"></canvas>
 
@@ -383,9 +310,9 @@
     <div class="qr-modal" id="qr-modal">
         <div class="qr-modal-content">
             <span class="close-qr" id="close-qr-btn">&times;</span>
-            <h3 style="color: #fff; font-size: 1.1rem;">QR-код страницы</h3>
-            <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px; margin-bottom: 12px;">Отсканируй с телефона</p>
-            <img id="qr-image" src="" alt="QR Code" style="border-radius: 12px;">
+            <h3 style="color: #fff; font-size: 1.1rem;">Ссылка на страницу</h3>
+            <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px; margin-bottom: 12px;" id="qr-url-text"></p>
+            <canvas id="qr-canvas" style="border-radius: 12px; margin: 0 auto; display: block;"></canvas>
         </div>
     </div>
 
@@ -394,14 +321,9 @@
 
     <div class="container">
         <div class="profile">
-            <div class="avatar-box" id="admin-trigger">
+            <div class="avatar-box" id="admin-trigger" title="Открыть аналитику">
                 <div class="avatar-ring"></div>
                 <img src="https://i.pinimg.com/736x/09/2d/18/092d18476bf383a5ad77926e83ef59d2.jpg" alt="Time Mouser Avatar" class="avatar" onerror="this.src='https://i.pinimg.com/474x/b6/e4/fb/b6e4fbd6be94845c6666e8729d126d2c.jpg?nii=t'">
-            </div>
-
-            <div class="status-badge" id="live-status-badge">
-                <span class="status-dot"></span>
-                <span id="live-status-text">ПОДКЛЮЧЕНИЕ...</span>
             </div>
 
             <h1>Time Mouser</h1>
@@ -410,7 +332,7 @@
 
         <div class="links-list">
 
-            <a href="https://www.youtube.com/@timemouser" target="_blank" class="link-card protected-link" data-name="YouTube" data-glow="var(--neon-red)">
+            <a href="https://www.youtube.com/@timemouser" target="_blank" class="link-card" data-name="YouTube" data-glow="var(--neon-red)">
                 <div class="icon-box youtube"><i class="fa-brands fa-youtube"></i></div>
                 <div class="link-text">
                     <span class="link-title">YouTube</span>
@@ -419,7 +341,7 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <a href="https://twitch.tv/timemouser" target="_blank" class="link-card protected-link" data-name="Twitch" data-glow="var(--neon-purple)">
+            <a href="https://twitch.tv/timemouser" target="_blank" class="link-card" data-name="Twitch" data-glow="var(--neon-purple)">
                 <div class="icon-box twitch"><i class="fa-brands fa-twitch"></i></div>
                 <div class="link-text">
                     <span class="link-title">Twitch</span>
@@ -428,7 +350,7 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <a href="https://steamcommunity.com/id/timemouser" target="_blank" class="link-card protected-link" data-name="Steam" data-glow="var(--neon-steam-accent)">
+            <a href="https://steamcommunity.com/id/timemouser" target="_blank" class="link-card" data-name="Steam" data-glow="var(--neon-steam-accent)">
                 <div class="icon-box steam"><i class="fa-brands fa-steam"></i></div>
                 <div class="link-text">
                     <span class="link-title">Steam</span>
@@ -437,7 +359,7 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <div class="link-card protected-link" id="copy-discord-btn" data-name="Discord" data-glow="var(--neon-blue)" style="cursor: pointer;">
+            <div class="link-card" id="copy-discord-btn" data-name="Discord" data-glow="var(--neon-blue)" style="cursor: pointer;">
                 <div class="icon-box discord"><i class="fa-brands fa-discord"></i></div>
                 <div class="link-text">
                     <span class="link-title">ШколоМаузер.lol</span>
@@ -447,7 +369,7 @@
                 <div class="copy-toast" id="copy-toast">Скопировано! 🎉</div>
             </div>
 
-            <a href="https://www.donationalerts.com/r/timemouserlol" target="_blank" class="link-card protected-link" data-name="DonationAlerts" data-glow="var(--neon-orange)">
+            <a href="https://www.donationalerts.com/r/timemouserlol" target="_blank" class="link-card" data-name="DonationAlerts" data-glow="var(--neon-orange)">
                 <div class="icon-box da"><i class="fa-solid fa-heart"></i></div>
                 <div class="link-text">
                     <span class="link-title">DonationAlerts</span>
@@ -462,17 +384,7 @@
     </div>
 
     <script>
-        // --- 0. НАСТРОЙКА СЕКРЕТА И АНАЛИТИКИ ---
-        const SECRET_HASH = "beebfd19810f34eb89e47fe23f9905fa8a3fa387ea1c2c366ffef092e0227bb3"; 
-
-        async function hashString(str) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
+        // --- 0. ЛОКАЛЬНАЯ АНАЛИТИКА ---
         let views = parseInt(localStorage.getItem('page_views') || '0');
         localStorage.setItem('page_views', views + 1);
 
@@ -484,39 +396,18 @@
 
         document.querySelectorAll('.link-card').forEach(card => {
             card.addEventListener('click', () => {
-                const title = card.querySelector('.link-title');
-                if (title) trackClick(title.textContent.trim());
+                const name = card.getAttribute('data-name') || card.querySelector('.link-title')?.textContent.trim();
+                if (name) trackClick(name);
             });
         });
 
-        async function checkPasswordAndOpen(inputPass) {
-            const hashedInput = await hashString(inputPass.trim());
-            if (hashedInput === SECRET_HASH) {
-                openAdminPanel();
-            }
-        }
-
-        let keyBuffer = '';
-        window.addEventListener('keydown', (e) => {
-            if (e.key.length === 1) {
-                keyBuffer += e.key;
-                if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
-                checkPasswordAndOpen(keyBuffer);
-            }
-        });
-
+        // КЛИК ПО АВАТАРКЕ С ДИАЛОГОВЫМ ОКНОМ
         const avatarBox = document.getElementById('admin-trigger');
         if (avatarBox) {
-            avatarBox.style.cursor = 'pointer';
-            avatarBox.addEventListener('click', async () => {
-                const pwd = prompt('Введите секретный код для админ-панели:');
-                if (pwd) {
-                    const hashedInput = await hashString(pwd.trim());
-                    if (hashedInput === SECRET_HASH) {
-                        openAdminPanel();
-                    } else {
-                        alert('Неверный пароль!');
-                    }
+            avatarBox.addEventListener('click', () => {
+                const confirmChoice = confirm("Привет! Это техническая часть где находиться аналитика");
+                if (confirmChoice) {
+                    openAdminPanel();
                 }
             });
         }
@@ -531,10 +422,10 @@
                 modal.innerHTML = `
                     <div class="qr-modal-content" style="max-width: 360px;">
                         <span class="close-qr" id="close-admin-btn">&times;</span>
-                        <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">📊 Аналитика сайта</h3>
+                        <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">📊 Локальная статистика</h3>
                         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: left;">
-                            <div style="color: var(--text-sub); font-size: 0.85rem;">Всего просмотров: <strong id="adm-views" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
-                            <div style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">Всего кликов по кнопкам: <strong id="adm-clicks" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
+                            <div style="color: var(--text-sub); font-size: 0.85rem;">Просмотров: <strong id="adm-views" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
+                            <div style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">Всего кликов: <strong id="adm-clicks" style="color:var(--neon-gold); font-size: 1.1rem;">0</strong></div>
                         </div>
                         <div style="text-align: left;">
                             <div style="color: #fff; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Клики по ссылкам:</div>
@@ -684,42 +575,24 @@
         const qrModal = document.getElementById('qr-modal');
         const openQrBtn = document.getElementById('open-qr-btn');
         const closeQrBtn = document.getElementById('close-qr-btn');
-        const qrImg = document.getElementById('qr-image');
+        const qrCanvas = document.getElementById('qr-canvas');
 
         if (openQrBtn) {
             openQrBtn.addEventListener('click', () => {
-                const currentUrl = encodeURIComponent(window.location.href);
-                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${currentUrl}&color=fbbf24&bgcolor=0d1224`;
+                document.getElementById('qr-url-text').textContent = window.location.href;
+                const ctx = qrCanvas.getContext('2d');
+                qrCanvas.width = 180;
+                qrCanvas.height = 180;
+                ctx.fillStyle = '#0d1224';
+                ctx.fillRect(0, 0, 180, 180);
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Time Mouser Links', 90, 95);
                 qrModal.style.display = 'flex';
             });
         }
         if (closeQrBtn) closeQrBtn.addEventListener('click', () => qrModal.style.display = 'none');
-
-        const TWITCH_CHANNEL = 'timemouser';
-        async function checkLiveStatus() {
-            const badge = document.getElementById('live-status-badge');
-            const statusText = document.getElementById('live-status-text');
-            if (!badge || !statusText) return;
-
-            try {
-                const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
-                if (twResponse.ok) {
-                    const twData = await twResponse.text();
-                    if (!twData.includes('offline') && !twData.includes('user not found')) {
-                        badge.classList.add('is-live');
-                        statusText.textContent = `TWITCH LIVE`;
-                        return;
-                    }
-                }
-                badge.classList.remove('is-live');
-                statusText.textContent = 'OFFLINE';
-            } catch (error) {
-                badge.classList.remove('is-live');
-                statusText.textContent = 'TIME MOUSER';
-            }
-        }
-        checkLiveStatus();
-        setInterval(checkLiveStatus, 60000);
 
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
