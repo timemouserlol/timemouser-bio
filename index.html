@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Название вкладки -->
     <title>Time Mouser</title>
-    <!-- Иконка вкладки (Nerd Emoji) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤓</text></svg>">
-    
-    <!-- Иконки FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -48,7 +44,6 @@
             overflow-x: hidden;
         }
 
-        /* --- Инфо о YT (Слева сверху) --- */
         .yt-notice-badge {
             position: fixed;
             top: 20px;
@@ -80,7 +75,6 @@
             text-overflow: ellipsis;
         }
 
-        /* --- Курсор --- */
         #cursor-dot {
             position: fixed;
             top: 0; left: 0;
@@ -124,7 +118,6 @@
             pointer-events: none;
         }
 
-        /* --- QR Кнопка --- */
         .qr-trigger-btn {
             position: fixed;
             top: 20px; right: 20px;
@@ -149,7 +142,7 @@
             box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
         }
 
-        .qr-modal {
+        .qr-modal, .admin-modal {
             display: none;
             position: fixed;
             inset: 0;
@@ -161,7 +154,7 @@
             padding: 20px;
         }
 
-        .qr-modal-content {
+        .qr-modal-content, .admin-modal-content {
             background: #0d1224;
             border: 1px solid var(--neon-gold);
             padding: 30px;
@@ -169,18 +162,11 @@
             text-align: center;
             box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
             position: relative;
-            max-width: 320px;
+            max-width: 420px;
             width: 100%;
         }
 
-        .qr-modal-content img {
-            width: 180px; height: 180px;
-            border-radius: 12px;
-            margin: 15px 0;
-            max-width: 100%;
-        }
-
-        .close-qr {
+        .close-modal {
             position: absolute;
             top: 10px; right: 15px;
             font-size: 1.4rem;
@@ -188,7 +174,6 @@
             cursor: pointer;
         }
 
-        /* --- Контейнер --- */
         .container {
             width: 100%;
             max-width: 460px;
@@ -199,7 +184,6 @@
             z-index: 1;
         }
 
-        /* --- Профиль --- */
         .profile {
             text-align: center;
             display: flex;
@@ -243,10 +227,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        .avatar-box:hover .avatar {
-            transform: scale(1.08) rotate(4deg);
-        }
-
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -261,21 +241,18 @@
             margin-bottom: 12px;
             letter-spacing: 1px;
             backdrop-filter: blur(10px);
-            transition: all 0.4s ease;
         }
 
         .status-dot {
             width: 8px; height: 8px;
             background-color: #64748b;
             border-radius: 50%;
-            transition: all 0.4s ease;
         }
 
         .status-badge.is-live {
             background: rgba(34, 197, 94, 0.15);
             border-color: rgba(34, 197, 94, 0.5);
             color: #4ade80;
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
         }
 
         .status-badge.is-live .status-dot {
@@ -296,7 +273,6 @@
             background: linear-gradient(135deg, #fff 20%, var(--neon-gold) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
         }
 
         .profile p {
@@ -304,7 +280,6 @@
             font-size: 0.95rem;
         }
 
-        /* --- Кнопки --- */
         .links-list {
             width: 100%;
             display: flex;
@@ -325,25 +300,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            will-change: transform;
         }
-
-        .link-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 22px;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent, var(--neon-gold));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .link-card:hover::after { opacity: 1; }
-        .link-card:hover { box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); }
 
         .icon-box {
             width: 50px; height: 50px;
@@ -355,7 +312,6 @@
             margin-right: 18px;
             flex-shrink: 0;
             color: #fff;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
         .link-text { flex-grow: 1; }
@@ -375,12 +331,6 @@
         .action-icon {
             color: rgba(255, 255, 255, 0.25);
             font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .link-card:hover .action-icon {
-            transform: translateX(4px);
-            color: var(--neon-gold);
         }
 
         .copy-toast {
@@ -395,7 +345,6 @@
             opacity: 0;
             transform: translateY(10px);
             transition: all 0.3s ease;
-            pointer-events: none;
         }
 
         .copy-toast.show {
@@ -414,125 +363,91 @@
             font-size: 0.85rem;
             color: var(--text-sub);
             opacity: 0.4;
-            letter-spacing: 1px;
         }
 
-        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ И ТАЧСКРИНОВ --- */
-        @media (max-width: 600px) {
-            body {
-                padding-top: 65px;
-                padding-bottom: 30px;
-            }
-
-            .yt-notice-badge {
-                top: 12px;
-                left: 12px;
-                padding: 6px 10px;
-                font-size: 0.7rem;
-                border-radius: 14px;
-            }
-
-            .qr-trigger-btn {
-                top: 12px;
-                right: 12px;
-                width: 38px;
-                height: 38px;
-                font-size: 1rem;
-            }
-
-            .avatar-box {
-                width: 110px;
-                height: 110px;
-            }
-
-            .avatar-ring {
-                width: 122px;
-                height: 122px;
-                top: -6px;
-                left: -6px;
-            }
-
-            .profile h1 {
-                font-size: 1.8rem;
-            }
-
-            .profile p {
-                font-size: 0.88rem;
-            }
-
-            .link-card {
-                padding: 14px 16px;
-                border-radius: 18px;
-            }
-
-            .icon-box {
-                width: 42px;
-                height: 42px;
-                font-size: 1.25rem;
-                margin-right: 14px;
-                border-radius: 12px;
-            }
-
-            .link-title {
-                font-size: 1rem;
-            }
-
-            .link-sub {
-                font-size: 0.78rem;
-            }
+        /* Таблица Админ-Панели */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+            text-align: left;
         }
-
-        /* Отключение кастомного курсора на сенсорных устройствах */
-        @media (pointer: coarse), (hover: none) {
-            * {
-                cursor: auto !important;
-            }
-            #cursor-dot, #cursor-trail-canvas {
-                display: none !important;
-            }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-card span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+        .stat-card strong {
+            font-size: 1.2rem;
+            color: var(--neon-gold);
         }
     </style>
 </head>
 <body>
 
-    <!-- Уведомление слева сверху -->
     <div class="yt-notice-badge">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <span>YouTube оффлайн (API недоступно)</span>
     </div>
 
-    <!-- Курсор -->
     <div id="cursor-dot"></div>
     <canvas id="cursor-trail-canvas"></canvas>
 
-    <!-- QR Кнопка -->
     <button class="qr-trigger-btn" id="open-qr-btn" title="Показать QR-код">
         <i class="fa-solid fa-qrcode"></i>
     </button>
 
-    <!-- Модалка QR -->
     <div class="qr-modal" id="qr-modal">
         <div class="qr-modal-content">
-            <span class="close-qr" id="close-qr-btn">&times;</span>
+            <span class="close-modal" id="close-qr-btn">&times;</span>
             <h3 style="color: #fff; font-size: 1.1rem;">QR-код страницы</h3>
             <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px;">Отсканируй с телефона</p>
             <img id="qr-image" src="" alt="QR Code">
         </div>
     </div>
 
-    <!-- Canvas декор -->
+    <!-- Модальное окно Админ Панели -->
+    <div class="admin-modal" id="admin-modal">
+        <div class="admin-modal-content">
+            <span class="close-modal" id="close-admin-btn">&times;</span>
+            <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 5px;">📊 Аналитика сайта</h3>
+            <p style="color: var(--text-sub); font-size: 0.8rem;">Статистика вашей страницы</p>
+            
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <span>Всего просмотров</span>
+                    <strong id="stat-views">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Всего кликов</span>
+                    <strong id="stat-clicks">0</strong>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-top: 10px;">
+                <span style="font-size: 0.8rem; color: var(--text-sub);">Клики по кнопкам:</span>
+                <ul id="clicks-breakdown" style="list-style: none; font-size: 0.85rem; margin-top: 6px;"></ul>
+            </div>
+        </div>
+    </div>
+
     <canvas id="bg-canvas"></canvas>
     <div class="dynamic-glow-bg" id="dynamic-glow"></div>
 
     <div class="container">
-        <!-- Профиль -->
         <div class="profile">
-            <div class="avatar-box">
+            <div class="avatar-box" id="admin-trigger">
                 <div class="avatar-ring"></div>
                 <img src="https://i.pinimg.com/736x/09/2d/18/092d18476bf383a5ad77926e83ef59d2.jpg" alt="Time Mouser Avatar" class="avatar" onerror="this.src='https://i.pinimg.com/474x/b6/e4/fb/b6e4fbd6be94845c6666e8729d126d2c.jpg?nii=t'">
             </div>
 
-            <!-- Статус Стримов -->
             <div class="status-badge" id="live-status-badge">
                 <span class="status-dot"></span>
                 <span id="live-status-text">ПОДКЛЮЧЕНИЕ...</span>
@@ -542,14 +457,10 @@
             <p>Стримы, игры и ламповый контент</p>
         </div>
 
-        <!-- Кнопки -->
         <div class="links-list">
 
-            <!-- YouTube -->
-            <a href="https://www.youtube.com/@timemouser" target="_blank" class="link-card protected-link" data-glow="var(--neon-red)">
-                <div class="icon-box youtube">
-                    <i class="fa-brands fa-youtube"></i>
-                </div>
+            <a href="https://www.youtube.com/@timemouser" target="_blank" class="link-card protected-link" data-name="YouTube" data-glow="var(--neon-red)">
+                <div class="icon-box youtube"><i class="fa-brands fa-youtube"></i></div>
                 <div class="link-text">
                     <span class="link-title">YouTube</span>
                     <span class="link-sub">Видео и ролики</span>
@@ -557,11 +468,8 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <!-- Twitch -->
-            <a href="https://twitch.tv/timemouser" target="_blank" class="link-card protected-link" data-glow="var(--neon-purple)">
-                <div class="icon-box twitch">
-                    <i class="fa-brands fa-twitch"></i>
-                </div>
+            <a href="https://twitch.tv/timemouser" target="_blank" class="link-card protected-link" data-name="Twitch" data-glow="var(--neon-purple)">
+                <div class="icon-box twitch"><i class="fa-brands fa-twitch"></i></div>
                 <div class="link-text">
                     <span class="link-title">Twitch</span>
                     <span class="link-sub">Прямые трансляции</span>
@@ -569,11 +477,8 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <!-- Steam -->
-            <a href="https://steamcommunity.com/id/timemouser" target="_blank" class="link-card protected-link" data-glow="var(--neon-steam-accent)">
-                <div class="icon-box steam">
-                    <i class="fa-brands fa-steam"></i>
-                </div>
+            <a href="https://steamcommunity.com/id/timemouser" target="_blank" class="link-card protected-link" data-name="Steam" data-glow="var(--neon-steam-accent)">
+                <div class="icon-box steam"><i class="fa-brands fa-steam"></i></div>
                 <div class="link-text">
                     <span class="link-title">Steam</span>
                     <span class="link-sub">Профиль и обмены</span>
@@ -581,11 +486,8 @@
                 <i class="fa-solid fa-chevron-right action-icon"></i>
             </a>
 
-            <!-- Discord -->
-            <div class="link-card protected-link" id="copy-discord-btn" data-glow="var(--neon-blue)" style="cursor: pointer;">
-                <div class="icon-box discord">
-                    <i class="fa-brands fa-discord"></i>
-                </div>
+            <div class="link-card protected-link" id="copy-discord-btn" data-name="Discord" data-glow="var(--neon-blue)" style="cursor: pointer;">
+                <div class="icon-box discord"><i class="fa-brands fa-discord"></i></div>
                 <div class="link-text">
                     <span class="link-title">ШколоМаузер.lol</span>
                     <span class="link-sub">Нажми, чтобы скопировать инвайт</span>
@@ -594,11 +496,8 @@
                 <div class="copy-toast" id="copy-toast">Скопировано! 🎉</div>
             </div>
 
-            <!-- DonationAlerts -->
-            <a href="https://www.donationalerts.com/r/timemouserlol" target="_blank" class="link-card protected-link" data-glow="var(--neon-orange)">
-                <div class="icon-box da">
-                    <i class="fa-solid fa-heart"></i>
-                </div>
+            <a href="https://www.donationalerts.com/r/timemouserlol" target="_blank" class="link-card protected-link" data-name="DonationAlerts" data-glow="var(--neon-orange)">
+                <div class="icon-box da"><i class="fa-solid fa-heart"></i></div>
                 <div class="link-text">
                     <span class="link-title">DonationAlerts</span>
                     <span class="link-sub">Поддержать стримера</span>
@@ -612,23 +511,85 @@
     </div>
 
     <script>
-        // Проверка сенсорного экрана
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        // --- 0. АНАЛИТИКА И АДМИН ПАНЕЛЬ ---
+        const SECRET_HASH = "beebfd19810f34eb89e47fe23f9905fa8a3fa387ea1c2c366ffef092e0227bb3"; 
 
-        // --- 0. DEBOUNCE ---
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- 1. ШЛЕЙФ КУРСОР (только для ПК) ---
+        function initAnalytics() {
+            let views = parseInt(localStorage.getItem('page_views') || '0');
+            localStorage.setItem('page_views', views + 1);
+        }
+        initAnalytics();
+
+        function trackClick(name) {
+            let clicks = JSON.parse(localStorage.getItem('click_stats') || '{}');
+            clicks[name] = (clicks[name] || 0) + 1;
+            localStorage.setItem('click_stats', JSON.stringify(clicks));
+        }
+
+        document.querySelectorAll('.link-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const name = card.getAttribute('data-name');
+                if (name) trackClick(name);
+            });
+        });
+
+        async function checkPasswordAndOpen(inputPass) {
+            const hashedInput = await hashString(inputPass);
+            if (hashedInput === SECRET_HASH) {
+                openAdminPanel();
+            }
+        }
+
+        // Ввод секретной фразы на клавиатуре
+        let keyBuffer = '';
+        window.addEventListener('keydown', (e) => {
+            keyBuffer += e.key;
+            if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
+            checkPasswordAndOpen(keyBuffer);
+        });
+
+        // Открытие по клику на аватар (с вводом пароля)
+        document.getElementById('admin-trigger').addEventListener('click', async () => {
+            const pwd = prompt('Введите секретный ключ:');
+            if (pwd) checkPasswordAndOpen(pwd);
+        });
+
+        function openAdminPanel() {
+            const views = localStorage.getItem('page_views') || '0';
+            const clicks = JSON.parse(localStorage.getItem('click_stats') || '{}');
+
+            document.getElementById('stat-views').textContent = views;
+
+            let totalClicks = 0;
+            const breakdown = document.getElementById('clicks-breakdown');
+            breakdown.innerHTML = '';
+
+            for (const [key, val] of Object.entries(clicks)) {
+                totalClicks += val;
+                const li = document.createElement('li');
+                li.innerHTML = `${key}: <strong style="color:var(--neon-gold)">${val}</strong>`;
+                breakdown.appendChild(li);
+            }
+
+            document.getElementById('stat-clicks').textContent = totalClicks;
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+
+        document.getElementById('close-admin-btn').addEventListener('click', () => {
+            document.getElementById('admin-modal').style.display = 'none';
+        });
+
+        // --- ДРУГИЕ ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ ---
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
         if (!isTouchDevice) {
             const dot = document.getElementById('cursor-dot');
             const trailCanvas = document.getElementById('cursor-trail-canvas');
@@ -639,11 +600,10 @@
                 trailCanvas.height = window.innerHeight;
             }
             resizeTrailCanvas();
-            window.addEventListener('resize', debounce(resizeTrailCanvas, 150));
+            window.addEventListener('resize', resizeTrailCanvas);
 
             let mouse = { x: -100, y: -100 };
             let particles = [];
-            let lastParticleTime = 0;
 
             window.addEventListener('mousemove', (e) => {
                 mouse.x = e.clientX;
@@ -651,19 +611,14 @@
                 dot.style.left = `${mouse.x}px`;
                 dot.style.top = `${mouse.y}px`;
 
-                const now = performance.now();
-                if (now - lastParticleTime > 25) { 
-                    lastParticleTime = now;
-                    if (particles.length < 50) {
-                        particles.push({
-                            x: mouse.x,
-                            y: mouse.y,
-                            size: Math.random() * 3 + 1,
-                            alpha: 1,
-                            vx: (Math.random() - 0.5) * 1.5,
-                            vy: (Math.random() - 0.5) * 1.5
-                        });
-                    }
+                if (particles.length < 40) {
+                    particles.push({
+                        x: mouse.x, y: mouse.y,
+                        size: Math.random() * 3 + 1,
+                        alpha: 1,
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: (Math.random() - 0.5) * 1.5
+                    });
                 }
             });
 
@@ -671,26 +626,19 @@
                 tCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
                 for (let i = 0; i < particles.length; i++) {
                     let p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
+                    p.x += p.vx; p.y += p.vy;
                     p.alpha -= 0.025;
-
                     tCtx.beginPath();
                     tCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                     tCtx.fillStyle = `rgba(251, 191, 36, ${Math.max(p.alpha, 0)})`;
                     tCtx.fill();
-
-                    if (p.alpha <= 0) {
-                        particles.splice(i, 1);
-                        i--;
-                    }
+                    if (p.alpha <= 0) { particles.splice(i, 1); i--; }
                 }
                 requestAnimationFrame(animateTrail);
             }
             animateTrail();
         }
 
-        // --- 2. ПОДСВЕТКА ФОНА ---
         const glowBg = document.getElementById('dynamic-glow');
         document.querySelectorAll('.link-card').forEach(card => {
             card.addEventListener('mouseenter', () => {
@@ -700,58 +648,31 @@
                     glowBg.style.opacity = '0.25';
                 }
             });
-            card.addEventListener('mouseleave', () => {
-                glowBg.style.opacity = '0';
-            });
+            card.addEventListener('mouseleave', () => glowBg.style.opacity = '0');
         });
 
-        // --- 3. КОПИРОВАНИЕ DISCORD ---
         const copyBtn = document.getElementById('copy-discord-btn');
         const copyToast = document.getElementById('copy-toast');
-        const DISCORD_LINK = 'https://discord.gg/2yjjVhjQ';
-        let isCopying = false;
-
         copyBtn.addEventListener('click', () => {
-            if (isCopying) return;
-            isCopying = true;
-
-            navigator.clipboard.writeText(DISCORD_LINK).then(() => {
+            navigator.clipboard.writeText('https://discord.gg/2yjjVhjQ').then(() => {
                 copyToast.classList.add('show');
-                setTimeout(() => {
-                    copyToast.classList.remove('show');
-                    isCopying = false;
-                }, 1800);
-            }).catch(() => {
-                isCopying = false;
+                setTimeout(() => copyToast.classList.remove('show'), 1800);
             });
         });
 
-        // --- 4. QR МОДАЛКА ---
         const qrModal = document.getElementById('qr-modal');
-        const openQrBtn = document.getElementById('open-qr-btn');
-        const closeQrBtn = document.getElementById('close-qr-btn');
-        const qrImg = document.getElementById('qr-image');
-
-        openQrBtn.addEventListener('click', () => {
-            const currentUrl = encodeURIComponent(window.location.href);
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${currentUrl}&color=fbbf24&bgcolor=0d1224`;
+        document.getElementById('open-qr-btn').addEventListener('click', () => {
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(window.location.href)}&color=fbbf24&bgcolor=0d1224`;
             qrModal.style.display = 'flex';
         });
+        document.getElementById('close-qr-btn').addEventListener('click', () => qrModal.style.display = 'none');
 
-        closeQrBtn.addEventListener('click', () => qrModal.style.display = 'none');
-        qrModal.addEventListener('click', (e) => {
-            if (e.target === qrModal) qrModal.style.display = 'none';
-        });
-
-        // --- 5. ТРЕКИНГ ТОЛЬКО TWITCH ---
-        const TWITCH_CHANNEL = 'timemouser';
-
+        // Twitch проверка
         async function checkLiveStatus() {
             const badge = document.getElementById('live-status-badge');
             const statusText = document.getElementById('live-status-text');
-
             try {
-                const twResponse = await fetch(`https://decapi.me/twitch/uptime/${TWITCH_CHANNEL}`);
+                const twResponse = await fetch(`https://decapi.me/twitch/uptime/timemouser`);
                 if (twResponse.ok) {
                     const twData = await twResponse.text();
                     if (!twData.includes('offline') && !twData.includes('user not found')) {
@@ -760,74 +681,14 @@
                         return;
                     }
                 }
-
                 badge.classList.remove('is-live');
                 statusText.textContent = 'OFFLINE';
-
             } catch (error) {
                 badge.classList.remove('is-live');
                 statusText.textContent = 'TIME MOUSER';
             }
         }
-
         checkLiveStatus();
-        setInterval(checkLiveStatus, 60000);
-
-        // --- 6. ВОЛНЫ НА ФОНЕ ---
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', debounce(resize, 150));
-        resize();
-
-        let step = 0;
-        function renderWaves() {
-            ctx.clearRect(0, 0, width, height);
-            step += 0.015;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = i === 0 ? 'rgba(251, 191, 36, 0.08)' : (i === 1 ? 'rgba(168, 85, 247, 0.08)' : 'rgba(88, 101, 242, 0.08)');
-                for (let x = 0; x <= width; x += 20) {
-                    const y = Math.sin(x * 0.003 + step + i) * 35 +
-                              Math.cos(x * 0.001 + step) * 15 +
-                              height / 2 + (i * 60 - 60);
-                    if (x === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-            }
-            requestAnimationFrame(renderWaves);
-        }
-        renderWaves();
-
-        // --- 7. МАГНИТНЫЙ ЭФФЕКТ КАРТОЧЕК (Только для ПК) ---
-        if (!isTouchDevice) {
-            document.querySelectorAll('.link-card').forEach(card => {
-                let rafId = null;
-
-                card.addEventListener('mousemove', (e) => {
-                    if (rafId) cancelAnimationFrame(rafId);
-                    
-                    rafId = requestAnimationFrame(() => {
-                        const rect = card.getBoundingClientRect();
-                        const x = e.clientX - rect.left - rect.width / 2;
-                        const y = e.clientY - rect.top - rect.height / 2;
-                        card.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px) scale(1.02)`;
-                    });
-                });
-
-                card.addEventListener('mouseleave', () => {
-                    if (rafId) cancelAnimationFrame(rafId);
-                    card.style.transform = 'translate(0px, 0px) scale(1)';
-                });
-            });
-        }
     </script>
 </body>
 </html>
